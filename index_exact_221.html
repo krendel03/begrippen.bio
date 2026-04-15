@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vocabulary Study Game</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #15803d;
+      --error: #b91c1c;
+      --border: #dbe3ef;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 860px;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 28px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin: 0;
+    }
+
+    .subtext {
+      color: var(--muted);
+      font-size: 1rem;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .scoreboard {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      background: #eef4ff;
+      color: #1e40af;
+      border: 1px solid #cfe0ff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .card {
+      background: #fbfdff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      margin-top: 20px;
+    }
+
+    .label {
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .definition {
+      font-size: 1.5rem;
+      line-height: 1.5;
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .choices, .level-buttons, .actions {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    button, input[type="text"] {
+      font: inherit;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 14px 16px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 700;
+      transition: transform 0.08s ease, background 0.2s ease, opacity 0.2s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+      transform: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover { background: var(--primary-hover); }
+
+    .btn-secondary {
+      background: #eef2f7;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover { background: #e8edf5; }
+
+    .choice-btn {
+      background: white;
+      border: 1px solid var(--border);
+      color: var(--text);
+      text-align: left;
+    }
+
+    .choice-btn.correct {
+      background: #eaf8ee;
+      border-color: #86d7a0;
+      color: var(--success);
+    }
+
+    .choice-btn.incorrect {
+      background: #feeeee;
+      border-color: #f3aaaa;
+      color: var(--error);
+    }
+
+    .answer-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .answer-row input {
+      flex: 1 1 280px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      font-size: 1rem;
+      min-width: 0;
+    }
+
+    .feedback {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .feedback.show { display: block; }
+
+    .feedback.correct {
+      background: #eaf8ee;
+      color: var(--success);
+      border: 1px solid #86d7a0;
+    }
+
+    .feedback.incorrect {
+      background: #feeeee;
+      color: var(--error);
+      border: 1px solid #f3aaaa;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .result-title {
+      font-size: 1.6rem;
+      margin: 0 0 8px;
+    }
+
+    .result-score {
+      font-size: 2rem;
+      font-weight: 800;
+      margin: 12px 0;
+      color: var(--primary);
+    }
+
+    @media (max-width: 640px) {
+      .app { padding: 20px; }
+      h1 { font-size: 1.65rem; }
+      .definition { font-size: 1.2rem; }
+      .result-score { font-size: 1.7rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div>
+        <h1>Vocabulary Study Game</h1>
+        <div class="subtext">
+          Choose a level, answer one definition at a time, and work through all 221 terms.
+        </div>
+      </div>
+      <div class="scoreboard">
+        <div class="pill" id="scorePill">Score: 0</div>
+        <div class="pill" id="progressPill">Question: 0 / 0</div>
+      </div>
+    </div>
+
+    <section class="screen active" id="startScreen">
+      <div class="card">
+        <div class="label">Choose level</div>
+        <p class="definition">Pick how you want to study today.</p>
+        <div class="level-buttons">
+          <button class="btn-primary" id="level1Btn">Level 1 — Multiple Choice</button>
+          <button class="btn-secondary" id="level2Btn">Level 2 — Input Mode</button>
+        </div>
+        <div class="footer-note">
+          The full Excel list is loaded into the code: 221 words and definitions.
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="quizScreen">
+      <div class="card">
+        <div class="label">Definition</div>
+        <p class="definition" id="definitionText"></p>
+
+        <div class="choices" id="choicesContainer"></div>
+
+        <div class="answer-row" id="inputContainer" style="display: none;">
+          <input type="text" id="answerInput" placeholder="Type the correct word..." autocomplete="off" />
+          <button class="btn-primary" id="submitBtn">Submit</button>
+        </div>
+
+        <div class="feedback" id="feedbackBox"></div>
+
+        <div class="actions">
+          <button class="btn-secondary" id="nextBtn" style="display: none;">Next Question</button>
+          <button class="btn-secondary" id="restartBtn">Restart</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="endScreen">
+      <div class="card">
+        <div class="label">Finished</div>
+        <h2 class="result-title">You completed the quiz.</h2>
+        <div class="result-score" id="finalScoreText"></div>
+        <div class="subtext" id="finalSummaryText"></div>
+        <div class="actions">
+          <button class="btn-primary" id="playAgainBtn">Play Again</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    /*
+      Full dataset loaded directly from your Excel file.
+      Total entries: 221
+    */
+    const vocabularyData = [
+  {
+    "word": "actief transport",
+    "definition": "transport via een membraan tegen de concentratierichting in, kost energie"
+  },
+  {
+    "word": "apoptose",
+    "definition": "het sterven van een cel als na controle blijkt dat het DNA onherstelbaar beschadigd is (geprogrammeerde celdood)"
+  },
+  {
+    "word": "basenparing",
+    "definition": "twee stikstofbasen zijn op een vaste manier door twee of drie H-bruggen met elkaar in het DNA verbonden (A met T en C met G)"
+  },
+  {
+    "word": "cascade",
+    "definition": "een proces dat in een aantal opeenvolgende stappen verloopt"
+  },
+  {
+    "word": "cel",
+    "definition": "functionele basiseenheid van het leven"
+  },
+  {
+    "word": "celdifferentiatie",
+    "definition": "proces waarbij een stamcel zich ontwikkelt tot een gespecialiseerde type cel"
+  },
+  {
+    "word": "celmembraan",
+    "definition": "scheiding tussen de binnen- en buitenkant van de cel, bestaat uit fosfolipiden, cholesterol en eiwitten"
+  },
+  {
+    "word": "celwand",
+    "definition": "buitenlaag bij plantaardige cellen (opgebouwd uit cellulose), bacteriën (opgebouwd uit suikers en aminozuren) en schimmels (opgebouwd uit chitine)"
+  },
+  {
+    "word": "centriolen",
+    "definition": "twee loodrecht op elkaar staande buisjes van eiwitten (centriolen) in dierlijke cellen, die een rol spelen bij de celdeling"
+  },
+  {
+    "word": "chloroplasten",
+    "definition": "ander woord voor bladgroenkorrels, ligt in het grondplasma van plantaardige cellen waar fotosynthese plaatsvindt"
+  },
+  {
+    "word": "coderende streng",
+    "definition": "de DNA-streng, complementair aan de matrijsstreng, waarvan de basenvolgorde overeenkomt met mRNA"
+  },
+  {
+    "word": "codon",
+    "definition": "drie opeenvolgende basen in het mRNA die samen coderen voor een aminozuur"
+  },
+  {
+    "word": "cytoplasma",
+    "definition": "het grondplasma binnen de cel"
+  },
+  {
+    "word": "cytoskelet",
+    "definition": "een draadvormig netwerk van structuureiwitten in het grondplasma dat de cel stevigheid en vorm geeft; de eiwitdraden spelen een rol bij het transport van organellen, bijvoorbeeld transportblaasjes"
+  },
+  {
+    "word": "diffusie",
+    "definition": "verplaatsen van deeltjes van een hoge naar een lage concentratie, kost geen energie"
+  },
+  {
+    "word": "DNA-moleculen",
+    "definition": "moleculen, opgebouwd uit nucleotiden, die de genetische informatie bevatten om eiwitten te maken"
+  },
+  {
+    "word": "dubbele helix",
+    "definition": "de moleculaire bouw van een DNA-molecuul in de vorm van een wenteltrap"
+  },
+  {
+    "word": "dubbelstrengs",
+    "definition": "bestaand uit twee strengen"
+  },
+  {
+    "word": "ecosysteem",
+    "definition": "een begrensd gebied waarin organismen met elkaar (biotisch) en met de levenloze natuur (abiotisch) relaties hebben"
+  },
+  {
+    "word": "emergente eigenschap",
+    "definition": "een nieuwe eigenschap op een hoger organisatieniveau die ontstaat door interactie van delen op een lager organisatieniveau; de onderdelen apart hebben die eigenschap niet"
+  },
+  {
+    "word": "endocytose",
+    "definition": "opname van deeltjes door afsnoering van een stukje van het celmembraan (blaasjes)"
+  },
+  {
+    "word": "endoplasmatisch reticulum (ER)",
+    "definition": "organel dat bestaat uit een netwerk van membranen in de cel voor transport van eiwitten"
+  },
+  {
+    "word": "enkelstrengs",
+    "definition": "bestaand uit één streng"
+  },
+  {
+    "word": "eukaryoot",
+    "definition": "organisme waarvan cellen een celkern hebben"
+  },
+  {
+    "word": "exocytose",
+    "definition": "afgifte van stoffen uit (transport)blaasjes die versmelten met het celmembraan"
+  },
+  {
+    "word": "flagellen",
+    "definition": "lange eiwitdraden voor de voortbeweging van eencelligen"
+  },
+  {
+    "word": "fosfolipide",
+    "definition": "vetachtige stof met een fosfaatgroep, bouwstof voor (biologische) membranen"
+  },
+  {
+    "word": "gen",
+    "definition": "een stuk van een DNA-molecuul met informatie voor het maken van een eiwit"
+  },
+  {
+    "word": "golgisysteem",
+    "definition": "organel dat bestaat uit een aantal platte membraanbuizen; het sorteert stoffen voor verder transport naar specifieke organellen of het celmembraan"
+  },
+  {
+    "word": "grondplasma",
+    "definition": "de waterige inhoud van de cel; vormt samen met de organellen het cytoplasma"
+  },
+  {
+    "word": "hydrofiel",
+    "definition": "(polair) trekt water aan"
+  },
+  {
+    "word": "hydrofoob",
+    "definition": "(apolair) waterafstotend"
+  },
+  {
+    "word": "hypertonisch",
+    "definition": "met een hogere concentratie opgeloste stoffen / osmotische waarde"
+  },
+  {
+    "word": "hypotonisch",
+    "definition": "met een lagere concentratie opgeloste stoffen / osmotische waarde"
+  },
+  {
+    "word": "isotonisch",
+    "definition": "met gelijke osmotische waarde"
+  },
+  {
+    "word": "kanker",
+    "definition": "een kwaadaardige tumor die zich door het lichaam verspreidt"
+  },
+  {
+    "word": "levensgemeenschap",
+    "definition": "alle organismen (die onderlinge (voedsel-) relaties hebben) in een bepaald gebied"
+  },
+  {
+    "word": "lysosoom",
+    "definition": "blaasje afkomstig van het golgisysteem met verteringsenzymen die versleten organellen en opgenomen stoffen afbreken"
+  },
+  {
+    "word": "matrijsstreng / template",
+    "definition": "de DNA-streng waaraan de mRNA-streng ontstaat bij een transcriptie"
+  },
+  {
+    "word": "mitochondrium",
+    "definition": "organel dat energie levert voor een cel in de vorm van ATP, opgebouwd uit twee membranen"
+  },
+  {
+    "word": "molecuul",
+    "definition": "een structuur die bestaat uit twee of meer atomen; het zijn de kleinste deeltjes van een stof met nog alle eigenschappen van die stof"
+  },
+  {
+    "word": "mRNA",
+    "definition": "een ribonucleïnezuurmolecuul dat de informatie voor een eiwit van de kern naar de ribosomen in het grondplasma brengt"
+  },
+  {
+    "word": "mutatie",
+    "definition": "veranderingen in DNA-moleculen"
+  },
+  {
+    "word": "orgaan",
+    "definition": "verschillende weefsels die samenwerken aan een bepaalde taak"
+  },
+  {
+    "word": "orgaanstelsel",
+    "definition": "diverse organen die samen een bepaalde taak hebben"
+  },
+  {
+    "word": "organel",
+    "definition": "een onderdeel van de cel met een bepaalde functie"
+  },
+  {
+    "word": "organisatieniveaus",
+    "definition": "begrensde biologische structuren, met een duidelijke samenhang tussen de onderdelen, waarbij elk niveau voortbouwt op de onderliggende niveaus"
+  },
+  {
+    "word": "organisme",
+    "definition": "levend wezen"
+  },
+  {
+    "word": "osmose",
+    "definition": "diffusie van water door een semipermeabel membraan heen; van een oplossing met een lage concentratie opgeloste stoffen naar een oplossing met een hoge concentratie opgeloste stoffen"
+  },
+  {
+    "word": "osmotische waarde",
+    "definition": "een maat voor de hoeveelheid opgeloste stoffen"
+  },
+  {
+    "word": "passief transport",
+    "definition": "transport via een membraan met de concentratierichting mee (hoog naar laag), kost geen energie"
+  },
+  {
+    "word": "plasmiden",
+    "definition": "kleine cirkelvormige DNA-moleculen, in het grondplasma van een bacterie, naast het cirkelvormige chromosoom"
+  },
+  {
+    "word": "plasmolyse",
+    "definition": "door het krimpen van een cel in een hypertonische oplossing laat het celmembraan los van de celwand"
+  },
+  {
+    "word": "plastiden",
+    "definition": "gekleurde (zie ‘chloroplasten’ en ‘chromoplasten’) en ongekleurde (zie ‘amyloplasten’) korrels in het grondplasma van plantaardige cellen"
+  },
+  {
+    "word": "populatie",
+    "definition": "een groep organismen van dezelfde soort in een bepaald gebied"
+  },
+  {
+    "word": "prokaryoot",
+    "definition": "eencellig organisme zonder celkern"
+  },
+  {
+    "word": "receptoreiwit",
+    "definition": "eiwit in celmembraan dat bepaalde deeltjes aan zich bindt (antenne van de cel)"
+  },
+  {
+    "word": "ribosoom",
+    "definition": "organel dat aminozuren aan elkaar koppelt tot eiwitten"
+  },
+  {
+    "word": "selectief permeabel",
+    "definition": "doorlaatbaar voor het oplosmiddel (meestal water) en een deel van de opgeloste stoffen"
+  },
+  {
+    "word": "soort",
+    "definition": "alle organismen met vergelijkbare eigenschappen die zich onderling kunnen voortplanten en vruchtbare nakomelingen kunnen krijgen"
+  },
+  {
+    "word": "stamcellen",
+    "definition": "cellen die het vermogen hebben zich te blijven delen en kunnen differentiëren in gespecialiseerde celtypen"
+  },
+  {
+    "word": "startcodon",
+    "definition": "de tripletcode van een mRNA-molecuul waarmee de vorming van een polypeptideketen start"
+  },
+  {
+    "word": "stikstofbase",
+    "definition": "stikstofhoudend molecuul, bouwstof voor DNA en RNA (DNA: A, C, G en T; RNA: A, C, G en U)"
+  },
+  {
+    "word": "stopcodon",
+    "definition": "een tripletcode in het mRNA-molecuul waarmee de vorming van een polypeptide stopt"
+  },
+  {
+    "word": "structuureiwitten",
+    "definition": "eiwitten die de cel vorm en stevigheid geven"
+  },
+  {
+    "word": "systeem Aarde",
+    "definition": "systeem bestaande uit alle ecosystemen: de fysische, chemische en biologische processen op aarde en hun onderlinge interacties"
+  },
+  {
+    "word": "transcriptie",
+    "definition": "overschrijven van DNA in mRNA"
+  },
+  {
+    "word": "translatie",
+    "definition": "het aflezen en vertalen van een mRNA naar een aminozuurvolgorde"
+  },
+  {
+    "word": "transporteiwit",
+    "definition": "eiwitmolecuul dat dienstdoet als transportkanaaltje in het celmembraan"
+  },
+  {
+    "word": "turgor",
+    "definition": "de druk van de inhoud van de cel op de celwand in een hypotonische oplossing"
+  },
+  {
+    "word": "vacuole",
+    "definition": "een met water en opgeloste stoffen gevulde blaas in plantaardige cellen"
+  },
+  {
+    "word": "weefsel",
+    "definition": "een groep cellen met dezelfde bouw en functie"
+  },
+  {
+    "word": "afhankelijke variabele",
+    "definition": "de variabele die afhankelijk is van de onafhankelijke variabele"
+  },
+  {
+    "word": "beschrijvend onderzoek",
+    "definition": "het verzamelen van gegevens door middel van tekeningen, foto’s, films of enquêtes"
+  },
+  {
+    "word": "betrouwbaarheid",
+    "definition": "nauwkeurig onderzoek dat bij herhaling vergelijkbare resultaten levert"
+  },
+  {
+    "word": "conclusie",
+    "definition": "de invloed van de onderzochte variabele vaststellen op grond van de onderzoeksresultaten"
+  },
+  {
+    "word": "controle-experiment",
+    "definition": "een experiment om mee aan te tonen dat er geen andere factoren zijn die invloed hebben op de resultaten van het experiment"
+  },
+  {
+    "word": "experimenteel onderzoek",
+    "definition": "onderzoek waarbij de onderzoeker een antwoord op de onderzoeksvraag probeert te krijgen door experimenten te doen"
+  },
+  {
+    "word": "hypothese",
+    "definition": "een voorlopig antwoord op de onderzoeksvraag"
+  },
+  {
+    "word": "indicator",
+    "definition": "middel om een specifiek molecuul aan te tonen"
+  },
+  {
+    "word": "methode",
+    "definition": "een beschrijving van de manier waarop je het onderzoek uitvoert (werkplan)"
+  },
+  {
+    "word": "onafhankelijke variabele",
+    "definition": "de variabele die de onderzoeker in het experiment heeft gebracht"
+  },
+  {
+    "word": "resultaten",
+    "definition": "een beschrijving van de uitkomsten van het onderzoek in tekst en of tabellen met een verwerking tot diagrammen"
+  },
+  {
+    "word": "spreiding",
+    "definition": "de variatie in de meetgegevens"
+  },
+  {
+    "word": "standaarddeviatie",
+    "definition": "een statistische methode om de spreiding rond een gemiddelde te berekenen"
+  },
+  {
+    "word": "valide",
+    "definition": "klopt het gekozen instrument met wat je daadwerkelijk wilt meten"
+  },
+  {
+    "word": "anticonceptiemiddel",
+    "definition": "(voorbehoedmiddel) middel om zwangerschap te voorkomen door de bevruchting of de innesteling tegen te gaan"
+  },
+  {
+    "word": "bevruchting",
+    "definition": "het samensmelten van de kern van een spermacel met de kern van een eicel"
+  },
+  {
+    "word": "crossing-over",
+    "definition": "de chromatiden van homologe chromosomen verstrengelen tijdens de meiose met elkaar en wisselen stukken uit"
+  },
+  {
+    "word": "diploïd",
+    "definition": "alle chromosomen zijn in tweevoud aanwezig in de cel"
+  },
+  {
+    "word": "foetus",
+    "definition": "stadium na embryo, acht weken oud, alle organen zijn aangelegd"
+  },
+  {
+    "word": "follikel",
+    "definition": "een blaasje van follikelcellen in de eierstok waarin een eicel rijpt"
+  },
+  {
+    "word": "FSH",
+    "definition": "hormoon van de hypofyse, stimuleert de ontwikkeling van follikels bij de vrouw en de vorming van spermacellen bij de man"
+  },
+  {
+    "word": "gele lichaam / corpus luteum",
+    "definition": "restant follikelcellen nadat de eicel is vrijgekomen bij de ovulatie"
+  },
+  {
+    "word": "geslachtelijke voortplanting",
+    "definition": "vermeerdering van organismen waarbij een eicel en een spermacel met elkaar versmelten en waarbij genetisch verschillende organismen ontstaan"
+  },
+  {
+    "word": "haploïd",
+    "definition": "(n) van alle chromosomen is één exemplaar aanwezig"
+  },
+  {
+    "word": "HCG",
+    "definition": "hormoon dat het embryo maakt en zorgt dat het gele lichaam stimuleert om progesteron te blijven maken"
+  },
+  {
+    "word": "homologe chromosomen",
+    "definition": "de chromosomen van één paar, een van de vader en een van de moeder"
+  },
+  {
+    "word": "hypofyse",
+    "definition": "centrale hormoonklier die de aansturing van hormoonklieren coördineert"
+  },
+  {
+    "word": "hypothalamus",
+    "definition": "1. hersendeel met verschillende receptoren die het inwendige milieu constant houden, onder andere voor de kerntemperatuur; bevat het regelcentrum die de norm voor de kerntemperatuur bewaakt. 2. deel van de hersenen, vlak boven de hypofyse, koppelt zenuwstelsel en hormoonstelsel; maakt neurohormonen die de activiteit van de hypofyse aansturen"
+  },
+  {
+    "word": "ICSI",
+    "definition": "intracytoplasmatische spermainjectie, een vorm van ivf waarbij een arts erfelijk materiaal van één spermacel in een eicel brengt"
+  },
+  {
+    "word": "IVF",
+    "definition": "in-vitrofertilisatie, bevruchting buiten het lichaam"
+  },
+  {
+    "word": "klievingsdeling",
+    "definition": "de eerste delingen van een bevruchte eicel"
+  },
+  {
+    "word": "kloon",
+    "definition": "genetisch identieke nakomelingen, ontstaan uit één ouder door ongeslachtelijke voortplanting"
+  },
+  {
+    "word": "kunstmatige inseminatie",
+    "definition": "het kunstmatig inbrengen van sperma bij de vrouw"
+  },
+  {
+    "word": "LH",
+    "definition": "(luteïniserend hormoon) hormoon van de hypofyse, stimuleert bij vrouwen de ovulatie en bij mannen de productie van het mannelijk geslachtshormoon testosteron (LH heet bij mannen ook wel ICSH)"
+  },
+  {
+    "word": "meiose",
+    "definition": "(reductiedeling) kerndeling in twee stappen, waarbij uit één diploïde cel vier haploïde cellen (geslachtscellen) ontstaan"
+  },
+  {
+    "word": "meiose I",
+    "definition": "eerste deel van de meiose, waarbij de chromosoomparen uit elkaar gaan (2n → n + n)"
+  },
+  {
+    "word": "meiose II",
+    "definition": "tweede deel van de meiose, waarbij de chromatiden van elk chromosoom uit elkaar gaan (n → n + n)"
+  },
+  {
+    "word": "menstruatiecyclus",
+    "definition": "cyclus van ongeveer 28 dagen bij de vrouw die onder invloed van hormonen begint met de ontwikkeling van follikels in de eierstok en eindigt met het afstoten van het baarmoederslijmvlies wanneer er geen bevruchting is opgetreden"
+  },
+  {
+    "word": "negatieve terugkoppeling",
+    "definition": "regelkring waarin het product door remming van het productieproces overproductie voorkomt, proces dat de afwijking van de norm tegengaat"
+  },
+  {
+    "word": "oestrogenen",
+    "definition": "vrouwelijke geslachtshormonen, gevormd door de follikel; stimuleren de secundaire geslachtskenmerken en de groei van nieuw baarmoederslijmvlies"
+  },
+  {
+    "word": "ongeslachtelijke voortplanting",
+    "definition": "vermeerdering van organismen uit één ouder waarbij genetisch identieke nakomelingen ontstaan"
+  },
+  {
+    "word": "ovarium / eierstok",
+    "definition": "geslachtsorgaan bij een vrouw waarin de eicellen zich ontwikkelen"
+  },
+  {
+    "word": "ovulatie / eisprong",
+    "definition": "het vrijkomen van de eicel uit een van beide eierstokken"
+  },
+  {
+    "word": "placenta",
+    "definition": "orgaan waar tijdens de zwangerschap uitwisseling van stoffen tussen moeder en kind plaatsvindt; bevat bloedvaten van moeder en kind"
+  },
+  {
+    "word": "poollichaampje",
+    "definition": "een haploïde cel met een kleine hoeveelheid cytoplasma die ontstaat tijdens de vorming van een eicel"
+  },
+  {
+    "word": "positieve terugkoppeling",
+    "definition": "regelkring waarin het product het productieproces versterkt"
+  },
+  {
+    "word": "primaire geslachtskenmerken",
+    "definition": "de kenmerken van het geslacht die al bij de geboorte aanwezig zijn"
+  },
+  {
+    "word": "progesteron",
+    "definition": "vrouwelijk geslachtshormoon, gevormd door het gele lichaam (en een placenta); stimuleert de groei en ontwikkeling van het baarmoederslijmvlies"
+  },
+  {
+    "word": "recombinatie",
+    "definition": "het ontstaan van nieuwe combinaties van allelen bij  de vorming van de geslachtscellen"
+  },
+  {
+    "word": "secundaire geslachtskenmerken",
+    "definition": "de kenmerken van het geslacht die in de puberteit ontstaan"
+  },
+  {
+    "word": "sperma",
+    "definition": "spermacellen met vocht van prostaatklier en zaadblaasjes"
+  },
+  {
+    "word": "testis / teelbal",
+    "definition": "geslachtsorgaan bij een man, vormt spermacellen"
+  },
+  {
+    "word": "testosteron",
+    "definition": "mannelijk geslachtshormoon, gevormd door de interstitiële cellen in de testes"
+  },
+  {
+    "word": "zygote",
+    "definition": "bevruchte eicel"
+  },
+  {
+    "word": "allel",
+    "definition": "variant van een gen"
+  },
+  {
+    "word": "autosomen",
+    "definition": "alle chromosomen, behalve de geslachtschromosomen X en Y"
+  },
+  {
+    "word": "chromosoommutatie",
+    "definition": "een mutatie van een heel chromosoom of een deel daarvan"
+  },
+  {
+    "word": "codominant",
+    "definition": "het fenotype waarbij twee verschillende allelen van een gen beide volledig tot uitdrukking komen"
+  },
+  {
+    "word": "dihybride kruising",
+    "definition": "een kruising waarbij de onderzoeker let op twee eigenschappen"
+  },
+  {
+    "word": "dominant",
+    "definition": "‘overheersend’ allel komt tot uiting in het fenotype"
+  },
+  {
+    "word": "epigenetica",
+    "definition": "onderzoeksgebied naar veranderingen in DNA-moleculen, zonder dat de nucleotidevolgorde veranderd"
+  },
+  {
+    "word": "epigenetische code",
+    "definition": "het uit- en aanschakelen van genen op het DNA door bijvoorbeeld DNAmethylering"
+  },
+  {
+    "word": "ethiek",
+    "definition": "discussie over wat wel en niet aanvaardbaar is (normen en waarden)"
+  },
+  {
+    "word": "fenotype",
+    "definition": "alle waarneembare eigenschappen en alle eigenschappen die te maken hebben met het functioneren van je lichaam"
+  },
+  {
+    "word": "gekoppelde genen",
+    "definition": "genen die op hetzelfde chromosoom liggen"
+  },
+  {
+    "word": "genetische modificatie",
+    "definition": "de techniek om een stukje DNA van het ene organisme in het andere te brengen"
+  },
+  {
+    "word": "genoom",
+    "definition": "de volledige erfelijke informatie van een organisme (in het DNA in de kern en het DNA in de mitochondriën en bij planten ook in de chloroplasten)"
+  },
+  {
+    "word": "genoommutatie",
+    "definition": "een wijziging in het aantal chromosomen"
+  },
+  {
+    "word": "genotype",
+    "definition": "de erfelijke informatie van een organisme, opgeslagen in de chromosomen"
+  },
+  {
+    "word": "geslachtschromosomen",
+    "definition": "het X- en Y-chromosoom; aan de combinatie is het biologisch geslacht te zien; bij de mens heeft een vrouw XX en een man XY"
+  },
+  {
+    "word": "haplotype",
+    "definition": "de combinatie waarin de allelen samen op één chromosoom voorkomen"
+  },
+  {
+    "word": "heterozygoot",
+    "definition": "met verschillende allelen op de homologe chromosomen"
+  },
+  {
+    "word": "homozygoot",
+    "definition": "met dezelfde allelen op de homologe chromosomen (AA of aa)"
+  },
+  {
+    "word": "intermediair",
+    "definition": "het fenotype is een mengvorm van beide allelen"
+  },
+  {
+    "word": "klassieke veredeling",
+    "definition": "het selecteren van individuen van een bepaalde soort met de meest gunstige allelencombinaties voor het verkrijgen van een volgende generatie"
+  },
+  {
+    "word": "letale allelen",
+    "definition": "allelen die in homozygote vorm dodelijk zijn voor een individu"
+  },
+  {
+    "word": "methylering",
+    "definition": "koppelen van een methylgroep (CH3-groep) aan het DNA, die genen ‘uitzet’"
+  },
+  {
+    "word": "monohybride kruising",
+    "definition": "een kruising waarin je kijkt naar de overerving van slechts één gen"
+  },
+  {
+    "word": "multipele allelen",
+    "definition": "meerdere allelen van een gen, bijv. bij bloedgroepen (IA, IB, i)"
+  },
+  {
+    "word": "onvolledig dominant",
+    "definition": "een werkzaam allel komt bij een heterozygoot deels tot uiting, meestal in een mengvorm (intermediair fenotype)"
+  },
+  {
+    "word": "puntmutatie",
+    "definition": "een verandering van één basenpaar in het DNA (A-T wordt bijvoorbeeld C-G)"
+  },
+  {
+    "word": "recessief",
+    "definition": "‘ondergeschikt’ een recessief allel komt tot uiting in het genotype als het individu voor dat allel homozygoot is"
+  },
+  {
+    "word": "stamboom",
+    "definition": "een schema van de bloedverwanten en voorouders van een individu; in een stamboom kan een erfelijke eigenschap worden weergegeven"
+  },
+  {
+    "word": "transgeen organisme",
+    "definition": "een organisme met toegevoegd DNA van een andere soort"
+  },
+  {
+    "word": "X-chromosomaal gen",
+    "definition": "een gen dat op het X-chromosoom ligt"
+  },
+  {
+    "word": "abiotische factor",
+    "definition": "invloed uit de levenloze omgeving"
+  },
+  {
+    "word": "accumulatie",
+    "definition": "ophoping van gifstoffen in een organisme"
+  },
+  {
+    "word": "adaptaties",
+    "definition": "erfelijke veranderingen in uiterlijke kenmerken of gedrag van een soort"
+  },
+  {
+    "word": "beperkende factor",
+    "definition": "de factor die de snelheid van een proces bepaalt doordat deze niet optimaal in voldoende mate aanwezig is"
+  },
+  {
+    "word": "biotische factor",
+    "definition": "invloed van een organisme"
+  },
+  {
+    "word": "commensalisme",
+    "definition": "(+/0) langdurige relatie waarvan één soort voordeel heeft en de andere soort geen voor- of nadeel"
+  },
+  {
+    "word": "draagkracht",
+    "definition": "de maximale capaciteit van een gebied om voldoende voedsel en schuil- en nestplaatsen te leveren, zodat de grootte van de populatie(s) jarenlang constant blijft"
+  },
+  {
+    "word": "eilandtheorie",
+    "definition": "beschrijft het verband tussen de biodiversiteit en factoren als de grootte van een eiland en de afstand die organismen moeten afleggen om er te komen"
+  },
+  {
+    "word": "fitness",
+    "definition": "het vermogen om bepaalde allelen door te geven aan de volgende generatie (voortplantingssucces)"
+  },
+  {
+    "word": "flessenhalseffect",
+    "definition": "(bottleneck effect) een verandering in allelfrequenties na een epidemie, brand of andere ramp waarbij het aantal individuen/allelen sterk is afgenomen"
+  },
+  {
+    "word": "founder effect",
+    "definition": "(stichtereffect) bij kolonisatie is de allelensamenstelling van de nieuwe populatie minder gevarieerd dan de allelensamenstelling van de oorspronkelijke populatie"
+  },
+  {
+    "word": "genetic drift",
+    "definition": "het door toeval afnemen of toenemen van de frequentie van een bepaald allel"
+  },
+  {
+    "word": "habitat",
+    "definition": "leefomgeving van plant en dier in een ecosysteem"
+  },
+  {
+    "word": "inteelt",
+    "definition": "kruisen van nauwverwante dieren, waarbij er een grotere kans is op afwijkingen die homozygoot recessief zijn"
+  },
+  {
+    "word": "mutualisme",
+    "definition": "(+/+) langdurige relatie waarvan beide soorten voordeel hebben"
+  },
+  {
+    "word": "niche",
+    "definition": "de omschrijving van hoe een soort de omgeving gebruikt en beïnvloedt"
+  },
+  {
+    "word": "optimumgebied",
+    "definition": "de waarden van de abiotische factoren waarbij een organisme het best gedijt"
+  },
+  {
+    "word": "parasitisme",
+    "definition": "(+/−) langdurige relatie waarvan één soort voordeel heeft en de andere nadeel"
+  },
+  {
+    "word": "persistent",
+    "definition": "niet of niet gemakkelijk afbreekbaar; deze stoffen hopen zich op in het lichaam en in de voedselketen"
+  },
+  {
+    "word": "predatie",
+    "definition": "het jagen op een prooi"
+  },
+  {
+    "word": "predator-prooirelatie",
+    "definition": "de relatie tussen prooi en natuurlijke vijand"
+  },
+  {
+    "word": "symbiose",
+    "definition": "langdurige relaties tussen twee soorten"
+  },
+  {
+    "word": "tolerantiecurve",
+    "definition": "grafische weergave van de tolerantiegrenzen en het optimumgebied"
+  },
+  {
+    "word": "verstoring",
+    "definition": "een snelle en blijvende verandering in een ecosysteem"
+  },
+  {
+    "word": "voedselketen",
+    "definition": "het doorgeven van energierijke voedingsstoffen in een ecosysteem van de ene soort naar de andere"
+  },
+  {
+    "word": "voedselrelatie",
+    "definition": "een soort eet een andere soort"
+  },
+  {
+    "word": "voedselweb",
+    "definition": "onderling verbonden voedselketens in een ecosysteem"
+  },
+  {
+    "word": "aeroob",
+    "definition": "in aanwezigheid van O2"
+  },
+  {
+    "word": "ammonificatie",
+    "definition": "anaeroob proces waarbij uit stikstofhoudende stoffen ammoniak (NH3) en ammonium (NH4 +) ontstaan"
+  },
+  {
+    "word": "anaeroob",
+    "definition": "bij afwezigheid van O2"
+  },
+  {
+    "word": "anorganische stof",
+    "definition": "eenvoudige stof die vrij in de natuur voorkomt, bijvoorbeeld water, zuurstof en kalkzout; bevat geen C-keten of C-H-bindingen"
+  },
+  {
+    "word": "biomassa",
+    "definition": "de totale massa aan energierijke stoffen van een groep organismen in een ecosysteem of van een trofisch niveau"
+  },
+  {
+    "word": "bruto primaire productie (BPP)",
+    "definition": "de hoeveelheid energie uit zonlicht die producenten vastleggen in hun organische stoffen (in kJ/m2/jaar of in kJ/m3/jaar)"
+  },
+  {
+    "word": "chemo-autotroof",
+    "definition": "organismen die organische stoffen opbouwen met behulp van energie uit oxidatie van eenvoudige anorganische stoffen"
+  },
+  {
+    "word": "chemosynthese",
+    "definition": "proces waarbij sommige soorten bacteriën, uit anorganische CO2 en H2O (bij bacteriën H2S), het organische energierijke C6H12O6 (glucose) opbouwen met behulp van energie uit oxidatie van eenvoudige anorganische stoffen"
+  },
+  {
+    "word": "climaxstadium",
+    "definition": "het laatste ecosysteem in een successiereeks"
+  },
+  {
+    "word": "consument van de ... orde",
+    "definition": "het ... heterotrofe organisme in een voedselketen"
+  },
+  {
+    "word": "consumenten",
+    "definition": "organismen die hun organische stoffen uit andere organismen halen"
+  },
+  {
+    "word": "denitrificatie",
+    "definition": "het omzetten van nitraat (NO3 −) in stikstofgas (N2)"
+  },
+  {
+    "word": "dissimilatie",
+    "definition": "afbraak/ 'verbranding' van organischestoffen"
+  },
+  {
+    "word": "energiestroomschema",
+    "definition": "schema van de stroom van energierijke biomassa op een trofisch niveau in een ecosysteem"
+  },
+  {
+    "word": "eutrofiëring",
+    "definition": "verrijking van het oppervlaktewater met (an)organische voedingsstoffen"
+  },
+  {
+    "word": "exoten",
+    "definition": "soorten die door menselijk handelen afkomstig zijn van een ander gebied en zich vestigen in een ecosysteem waar ze van nature niet voorkomen"
+  },
+  {
+    "word": "fossiele brandstoffen",
+    "definition": "organische stoffen in de bodem (sinks) in de vorm van bruin- en steenkool, aardolie en aardgas, wat miljoenen jaren geleden is vastgelegd"
+  },
+  {
+    "word": "foto-autotroof",
+    "definition": "organismen die organische stoffen opbouwen met behulp van energie uit licht"
+  },
+  {
+    "word": "fotochemische stikstoffixatie",
+    "definition": "chemische reactie tijdens onweer tussen O2 en N2 waarbij NO2 − en NO3 − ontstaan"
+  },
+  {
+    "word": "fotosynthese",
+    "definition": "proces waarbij groene planten en sommige soorten bacteriën, uit anorganische CO2 en H2O (bij bacteriën H2S), het organische energierijke C6H12O6 (glucose) opbouwen met behulp van energie uit licht"
+  },
+  {
+    "word": "heterotroof",
+    "definition": "organismen die organische stoffen gebruiken afkomstig van andere organismen"
+  },
+  {
+    "word": "kringloop",
+    "definition": "de manier waarop elementen via de voedselketens weer terug komen tot hun oorspronkelijke vorm"
+  },
+  {
+    "word": "langzame C-kringloop",
+    "definition": "de koolstof (C) is miljoenen jaren opgeslagen in de bodem, vooral in de vorm van fossiele brandstoffen en CaCO3"
+  },
+  {
+    "word": "netto primaire productie (NPP)",
+    "definition": "de hoeveelheid gevormde organische stoffen die producenten beschikbaar hebben als bouwstof voor de voortgezette assimilatie (in kJ/m2/ dag of in kJ/m3/dag)"
+  },
+  {
+    "word": "nitrificatie",
+    "definition": "aeroob proces waarbij nitrietbacteriën ammoniak (NH3) en ammonium (NH4+) omzetten in nitriet (NO2 −) en nitraatbacteriën nitriet omzetten in nitraat (NO3 −)"
+  },
+  {
+    "word": "organische stof",
+    "definition": "stof gemaakt door een organisme, bijvoorbeeld glucose of eiwit; bevat een C-keten en C–H-bindingen"
+  },
+  {
+    "word": "pioniersoorten",
+    "definition": "de eerste producenten aan het begin van een successie in een ecosysteem"
+  },
+  {
+    "word": "piramide van biomassa",
+    "definition": "geeft aan hoe de biomassa op een bepaald tijdstip is verdeeld over de trofische niveaus"
+  },
+  {
+    "word": "piramide van productiviteit",
+    "definition": "geeft aan hoe het berekende jaargemiddelde van de biomassa in een ecosysteem verdeeld is over de trofische niveaus"
+  },
+  {
+    "word": "producenten",
+    "definition": "organismen die organische stoffen opbouwen uit anorganische stoffen"
+  },
+  {
+    "word": "reducenten",
+    "definition": "schimmels en bacteriën in een ecosysteem die als laatste schakel van een voedselketen organisch (rest)materiaal afbreken"
+  },
+  {
+    "word": "snelle koolstofkringloop",
+    "definition": "de koolstof (C) gaat van producenten naar consumenten en komt via reducenten weer beschikbaar voor de producenten; een deel van de koolstof komt in de voedselketen bij dissimilatie vrij als CO2, duurt maximaal een paar duizend jaar"
+  },
+  {
+    "word": "stikstoffixerende bacteriën",
+    "definition": "knolletjesbacteriën zetten stikstofgas (N2) uit de lucht om in ammoniak (NH3)"
+  },
+  {
+    "word": "stikstofkringloop",
+    "definition": "de route van het element stikstof (N) in een ecosysteem"
+  },
+  {
+    "word": "successie",
+    "definition": "opeenvolgende verandering van de soortensamenstelling van planten en dieren in een ecosysteem"
+  },
+  {
+    "word": "trofisch niveau",
+    "definition": "de plaats van een organisme in een voedselketen"
+  },
+  {
+    "word": "uitspoeling",
+    "definition": "het verdwijnen van voedingsstoffen uit het ecosysteem naar het grondwater"
+  }
+];
+
+    const state = {
+      mode: null,
+      questions: [],
+      currentIndex: 0,
+      score: 0,
+      answered: false
+    };
+
+    const startScreen = document.getElementById("startScreen");
+    const quizScreen = document.getElementById("quizScreen");
+    const endScreen = document.getElementById("endScreen");
+
+    const level1Btn = document.getElementById("level1Btn");
+    const level2Btn = document.getElementById("level2Btn");
+
+    const definitionText = document.getElementById("definitionText");
+    const choicesContainer = document.getElementById("choicesContainer");
+    const inputContainer = document.getElementById("inputContainer");
+    const answerInput = document.getElementById("answerInput");
+    const submitBtn = document.getElementById("submitBtn");
+    const feedbackBox = document.getElementById("feedbackBox");
+    const nextBtn = document.getElementById("nextBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const playAgainBtn = document.getElementById("playAgainBtn");
+
+    const scorePill = document.getElementById("scorePill");
+    const progressPill = document.getElementById("progressPill");
+    const finalScoreText = document.getElementById("finalScoreText");
+    const finalSummaryText = document.getElementById("finalSummaryText");
+
+    function shuffle(array) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function normalize(text) {
+      return text.trim().toLowerCase();
+    }
+
+    function showScreen(screenToShow) {
+      [startScreen, quizScreen, endScreen].forEach(screen => {
+        screen.classList.remove("active");
+      });
+      screenToShow.classList.add("active");
+    }
+
+    function updateTopBar() {
+      scorePill.textContent = `Score: ${state.score}`;
+      progressPill.textContent = `Question: ${Math.min(state.currentIndex + 1, state.questions.length)} / ${state.questions.length}`;
+    }
+
+    function buildChoices(correctWord) {
+      const wrongWords = vocabularyData
+        .filter(item => item.word !== correctWord)
+        .map(item => item.word);
+
+      const shuffledWrongWords = shuffle(wrongWords).slice(0, 2);
+      return shuffle([correctWord, ...shuffledWrongWords]);
+    }
+
+    function startGame(mode) {
+      state.mode = mode;
+      state.questions = shuffle(vocabularyData);
+      state.currentIndex = 0;
+      state.score = 0;
+      state.answered = false;
+
+      showScreen(quizScreen);
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const currentQuestion = state.questions[state.currentIndex];
+      state.answered = false;
+
+      definitionText.textContent = currentQuestion.definition;
+      feedbackBox.className = "feedback";
+      feedbackBox.textContent = "";
+      nextBtn.style.display = "none";
+
+      updateTopBar();
+
+      if (state.mode === "multiple") {
+        renderMultipleChoice(currentQuestion);
+      } else {
+        renderInputMode();
+      }
+    }
+
+    function renderMultipleChoice(question) {
+      choicesContainer.innerHTML = "";
+      choicesContainer.style.display = "grid";
+      inputContainer.style.display = "none";
+
+      const choices = buildChoices(question.word);
+
+      choices.forEach(choice => {
+        const button = document.createElement("button");
+        button.className = "choice-btn";
+        button.textContent = choice;
+        button.addEventListener("click", () => handleMultipleChoiceAnswer(choice, question.word, button));
+        choicesContainer.appendChild(button);
+      });
+    }
+
+    function renderInputMode() {
+      choicesContainer.style.display = "none";
+      inputContainer.style.display = "flex";
+      answerInput.value = "";
+      answerInput.disabled = false;
+      submitBtn.disabled = false;
+      answerInput.focus();
+    }
+
+    function handleMultipleChoiceAnswer(selectedWord, correctWord, clickedButton) {
+      if (state.answered) return;
+      state.answered = true;
+
+      const allButtons = choicesContainer.querySelectorAll("button");
+      const isCorrect = selectedWord === correctWord;
+
+      if (isCorrect) {
+        state.score++;
+      }
+
+      allButtons.forEach(button => {
+        button.disabled = true;
+        if (button.textContent === correctWord) {
+          button.classList.add("correct");
+        } else if (button === clickedButton && !isCorrect) {
+          button.classList.add("incorrect");
+        }
+      });
+
+      showFeedback(isCorrect, correctWord);
+    }
+
+    function handleInputAnswer() {
+      if (state.answered) return;
+
+      const currentQuestion = state.questions[state.currentIndex];
+      const userAnswer = normalize(answerInput.value);
+      const correctAnswer = normalize(currentQuestion.word);
+
+      state.answered = true;
+      const isCorrect = userAnswer === correctAnswer;
+
+      if (isCorrect) {
+        state.score++;
+      }
+
+      answerInput.disabled = true;
+      submitBtn.disabled = true;
+
+      showFeedback(isCorrect, currentQuestion.word);
+    }
+
+    function showFeedback(isCorrect, correctWord) {
+      feedbackBox.classList.add("show");
+
+      if (isCorrect) {
+        feedbackBox.classList.add("correct");
+        feedbackBox.textContent = `Correct. The answer is "${correctWord}".`;
+      } else {
+        feedbackBox.classList.add("incorrect");
+        feedbackBox.textContent = `Incorrect. The correct answer is "${correctWord}".`;
+      }
+
+      nextBtn.style.display = "block";
+      updateTopBar();
+    }
+
+    function nextQuestion() {
+      state.currentIndex++;
+
+      if (state.currentIndex >= state.questions.length) {
+        showResults();
+        return;
+      }
+
+      renderQuestion();
+    }
+
+    function showResults() {
+      showScreen(endScreen);
+      finalScoreText.textContent = `${state.score} / ${state.questions.length}`;
+
+      const percentage = Math.round((state.score / state.questions.length) * 100);
+      finalSummaryText.textContent = `You answered ${percentage}% of the questions correctly.`;
+      scorePill.textContent = `Score: ${state.score}`;
+      progressPill.textContent = `Question: ${state.questions.length} / ${state.questions.length}`;
+    }
+
+    function restartGame() {
+      state.mode = null;
+      state.questions = [];
+      state.currentIndex = 0;
+      state.score = 0;
+      state.answered = false;
+
+      answerInput.value = "";
+      answerInput.disabled = false;
+      submitBtn.disabled = false;
+      feedbackBox.className = "feedback";
+      feedbackBox.textContent = "";
+      choicesContainer.innerHTML = "";
+      nextBtn.style.display = "none";
+
+      scorePill.textContent = "Score: 0";
+      progressPill.textContent = "Question: 0 / 0";
+
+      showScreen(startScreen);
+    }
+
+    level1Btn.addEventListener("click", () => startGame("multiple"));
+    level2Btn.addEventListener("click", () => startGame("input"));
+    submitBtn.addEventListener("click", handleInputAnswer);
+    nextBtn.addEventListener("click", nextQuestion);
+    restartBtn.addEventListener("click", restartGame);
+    playAgainBtn.addEventListener("click", restartGame);
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+
+      const quizIsVisible = quizScreen.classList.contains("active");
+      if (!quizIsVisible) return;
+
+      if (state.answered) {
+        nextQuestion();
+        return;
+      }
+
+      if (state.mode === "input") {
+        handleInputAnswer();
+      }
+    });
+  </script>
+</body>
+</html>
